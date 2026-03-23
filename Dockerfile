@@ -5,7 +5,7 @@ ARG GOLANG_VER=1.22
 FROM --platform=$TARGETPLATFORM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_VER} AS base
 
 #--------------#
-FROM --platform=$BUILDPLATFORM golang:${GOLANG_VER}-alpine${ALPINE_VER} AS wireproxy-builder
+FROM --platform=$BUILDPLATFORM golang:${GOLANG_VER}-alpine AS wireproxy-builder
 ARG TARGETOS
 ARG TARGETARCH
 ENV CGO_ENABLED=0
