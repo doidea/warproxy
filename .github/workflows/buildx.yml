@@ -28,7 +28,7 @@ jobs:
           context: .
           file: Dockerfile
           tags: ${{ env.IMAGE_NAME }}:testing
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
       - name: Load Built Image and Test
         run: |
           docker buildx build \
