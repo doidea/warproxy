@@ -1,23 +1,24 @@
 ARG ALPINE_VER=3.22
 ARG GOLANG_VER=1.22
+ARG WIREPROXY_VERSION=v1.1.2
 
-#--------------#
-FROM --platform=$TARGETPLATFORM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_VER} AS base
+FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_VER} AS base
 
-#--------------#
 FROM --platform=$BUILDPLATFORM golang:${GOLANG_VER}-alpine AS wireproxy-builder
 ARG TARGETOS
 ARG TARGETARCH
+ARG WIREPROXY_VERSION
 ENV CGO_ENABLED=0
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go install github.com/pufferffish/wireproxy/cmd/wireproxy@latest
+RUN apk add --no-cache git make
+WORKDIR /src
+RUN git clone --depth 1 --branch ${WIREPROXY_VERSION} https://github.com/pufferffish/wireproxy.git .
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH make
 
-#--------------#
-FROM --platform=$TARGETPLATFORM base AS wgcf-builder
+FROM base AS wgcf-builder
 RUN curl -fsSL https://git.io/wgcf.sh | bash
 
-#--------------#
 FROM base AS collector
-COPY --from=wireproxy-builder /go/bin/wireproxy /bar/usr/local/bin/wireproxy
+COPY --from=wireproxy-builder /src/wireproxy /bar/usr/local/bin/wireproxy
 COPY --from=wgcf-builder /usr/local/bin/wgcf /bar/usr/local/bin/wgcf
 COPY root/ /bar/
 RUN chmod a+x \
@@ -26,7 +27,6 @@ RUN chmod a+x \
     /bar/etc/s6-overlay/s6-rc.d/*/finish \
     /bar/etc/s6-overlay/s6-rc.d/*/data/*
 
-#--------------#
 FROM base AS publisher
 LABEL maintainer="kingcc"
 LABEL org.opencontainers.image.source=https://github.com/kingcc/warproxy
@@ -38,9 +38,7 @@ RUN apk add --no-cache grep sed python3 && \
     rm -r /usr/lib/python*/ensurepip && \
     if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip; fi && \
     pip3 install --no-cache requests toml && \
-    rm -rf \
-    /tmp/* \
-    /root/.cache
+    rm -rf /tmp/* /root/.cache
 
 ENV \
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
