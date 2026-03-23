@@ -1,5 +1,5 @@
 ARG ALPINE_VER=3.22
-ARG GOLANG_VER=1.22
+ARG GOLANG_VER=1.26
 ARG WIREPROXY_VERSION=v1.1.2
 
 FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_VER} AS base
